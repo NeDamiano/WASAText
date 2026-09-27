@@ -5,8 +5,9 @@ servers:
 info:
   title: WASAText
   description: |-
-    WASAText is a PC based messaging platform that allows 
-    users to communicate with contacts and groups.
+    Connect with your friends effortlessly using WASAText! Send and receive messages, whether one-on-one
+    or in groups, all from the convenience of your PC. Enjoy seamless conversations with text or GIFs and
+    easily stay in touch through your private chats or group discussions.
   version: 1.0.0
 
 tags:
@@ -22,6 +23,8 @@ tags:
     description: Reactions (comments) on messages
   - name: group
     description: Group management
+  - name: photo
+    description: Download of images
 
 security:
   - bearerAuth: []
@@ -60,7 +63,7 @@ paths:
                   identifier: { $ref: "#/components/schemas/ResourceId" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "500": { $ref: "#/components/responses/InternalServerError" }
-
+    
   /me/username:
     put:
       tags: ["user"]
@@ -70,7 +73,7 @@ paths:
         be already used by another user.
       operationId: setMyUserName
       requestBody:
-        description: New username
+        description: The new username
         required: true
         content:
           application/json:
@@ -90,6 +93,117 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "409":
           description: The username is already used by another user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /me/photo:
+    put:
+      tags: ["user"]
+      summary: Changes my profile photo
+      description: Uploads a new profile photo for the logged-in user.
+      operationId: setMyPhoto
+      requestBody:
+        description: The new photo
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/PhotoUpload" }
+      responses:
+        "200":
+          description: Photo updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  
+  /users:
+    get:
+      tags: ["user"]
+      summary: Lists or searches users
+      description: |-
+        Returns all WASAText users. If the "username" parameter is given,
+        only users with that text in the username are returned.
+      operationId: searchUsers
+      parameters:
+      - name: username
+        in: query
+        description: Text to search in the usernames
+        schema:
+          type: string
+          pattern: '^.*?$'
+          minLength: 1
+          maxLength: 16
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                description: Users found
+                type: array
+                minItems: 0
+                maxItems: 1000
+                items: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+
+  /conversations:
+    get:
+      tags: ["conversation"]
+      summary: Lists my conversations
+      description: |-
+        Returns the conversations of the logged-in user, one-to-one and
+        groups, in reverse chronological order (latest message first).
+      operationId: getMyConversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                description: The user's conversations
+                type: array
+                minItems: 0
+                maxItems: 1000
+                items: { $ref: "#/components/schemas/ConversationPreview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    post:
+      tags: ["conversation"]
+      summary: Starts a one-to-one conversation
+      description: |-
+        Starts a conversation with another user. If a conversation with
+        that user already exists, it is returned instead.
+      operationId: startConversation
+      requestBody:
+        description: The user to talk to
+        required: true
+        content:
+          application/json:
+            schema:
+              description: Other user
+              type: object
+              properties:
+                userId: { $ref: "#/components/schemas/ResourceId" }
+              required: [userId]
+      responses:
+        "200":
+          description: The conversation already existed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Conversation" }
+        "201":
+          description: Conversation created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Conversation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
 
 
@@ -97,8 +211,6 @@ paths:
 
 
 
-
-#Da fare
 components:
   securitySchemes:
     bearerAuth:
@@ -122,6 +234,19 @@ components:
       minimum: 1
       example: 42
     
+    Error:
+      description: Details about an error
+      type: object
+      properties:
+        message:
+          description: Explanation of the error
+          type: string
+          pattern: '^.*?$'
+          minLength: 1
+          maxLength: 200
+          example: The username is already used
+      required: [message]
+    
     User:
       description: A WASAText user
       type: object
@@ -132,23 +257,131 @@ components:
       required: [id, name]
 
     Photo:
-      description: Image encoded in base64
+      description: |-
+        URL of the photo.
       type: string
-      format: byte
-      minLength: 0
+      pattern: '^/photos/[0-9]+$'
+      minLength: 9
+      maxLength: 32
+      example: "/photos/15"
+ 
+    PhotoFile:
+      description: Raw bytes of an image file
+      type: string
+      format: binary
+      minLength: 1
       maxLength: 10000000
+    
+    PhotoUpload:
+      description: A photo file to upload
+      type: object
+      properties:
+        photo: { $ref: "#/components/schemas/PhotoFile" }
+      required: [photo]
 
+    ConversationPreview:
+      description: One element of the conversation list
+      type: object
+      properties:
+        id: { $ref: "#/components/schemas/ResourceId" }
+        type: { $ref: "#/components/schemas/ConversationType" }
+        name:
+          description: Other user's username, or the group name
+          type: string
+          pattern: '^.*?$'
+          minLength: 1
+          maxLength: 32
+        photo: { $ref: "#/components/schemas/Photo" }
+        lastMessage:
+          description: Preview of the latest message, if any
+          type: object
+          properties:
+            timestamp: { $ref: "#/components/schemas/Timestamp" }
+            preview:
+              description: First characters of the text, empty for photos
+              type: string
+              pattern: '^.*?$'
+              minLength: 0
+              maxLength: 64
+            isPhoto:
+              description: True if the message is a photo (show an icon)
+              type: boolean
+      required: [id, type, name]
+ 
+    ConversationType:
+      description: One-to-one conversation or group
+      type: string
+      enum: [direct, group]
+      example: direct
+ 
+    Conversation:
+      description: A conversation with its members and messages
+      type: object
+      properties:
+        id: { $ref: "#/components/schemas/ResourceId" }
+        type: { $ref: "#/components/schemas/ConversationType" }
+        name:
+          description: Other user's username, or the group name
+          type: string
+          pattern: '^.*?$'
+          minLength: 1
+          maxLength: 32
+        photo: { $ref: "#/components/schemas/Photo" }
+        members:
+          description: Users in the conversation
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items: { $ref: "#/components/schemas/User" }
+        messages:
+          description: Messages, newest first
+          type: array
+          minItems: 0
+          maxItems: 10000
+          items: { $ref: "#/components/schemas/Message" }
+      required: [id, type, name, members]
+
+    Timestamp:
+      # TODO
+      type: string
+    
+    Message:
+      # TODO
+      type: object
 
 
   responses:
-    Unauthorized:
-      description: The access token is missing or it's expired
     BadRequest:
-      description: The request was not compliant with the documentation (eg. missing fields, etc)
+      description: The request is not valid (wrong format or missing fields)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    
+    Unauthorized:
+      description: The Authorization header is missing or not valid
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    
+    Forbidden:
+      description: The user is not allowed to do this action
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    
+    NotFound:
+      description: The requested resource does not exist
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    
     InternalServerError:
-      description: The server encountered an internal error. Further info in server logs
+      description: The server encountered an internal error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
 
-
+  #TODO
   parameters:
     cat:
       schema:
