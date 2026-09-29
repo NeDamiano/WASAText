@@ -142,7 +142,7 @@ paths:
           description: The image file
           content:
             image/*:
-              schema: { $ref: "#/components/schemas/PhotoFile" }
+              schema: { $ref: "#/components/schemas/ImageFile" }
         "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
   
@@ -169,11 +169,16 @@ paths:
           content:
             application/json:
               schema:
-                description: Users found
-                type: array
-                minItems: 0
-                maxItems: 1000
-                items: { $ref: "#/components/schemas/User" }
+                description: Search results
+                type: object
+                properties:
+                  users:
+                    description: Users found
+                    type: array
+                    minItems: 0
+                    maxItems: 1000
+                    items: { $ref: "#/components/schemas/User" }
+                required: [users]
         "401": { $ref: "#/components/responses/Unauthorized" }
         "500": { $ref: "#/components/responses/InternalServerError" }
 
@@ -191,11 +196,16 @@ paths:
           content:
             application/json:
               schema:
-                description: The user's conversations
-                type: array
-                minItems: 0
-                maxItems: 1000
-                items: { $ref: "#/components/schemas/ConversationPreview" }
+                description: User's conversations list
+                type: object
+                properties:
+                  conversations:
+                    description: The user's conversations
+                    type: array
+                    minItems: 0
+                    maxItems: 1000
+                    items: { $ref: "#/components/schemas/ConversationSummary" }
+                required: [conversations]
         "401": { $ref: "#/components/responses/Unauthorized" }
         "500": { $ref: "#/components/responses/InternalServerError" }
     post:
@@ -315,8 +325,8 @@ paths:
               description: Where to forward the message
               type: object
               properties:
-                conversationId: { $ref: "#/components/schemas/ResourceId" }
-              required: [conversationId]
+                destinationId: { $ref: "#/components/schemas/ResourceId" }
+              required: [destinationId]
       responses:
         "201":
           description: Message forwarded
@@ -578,7 +588,7 @@ components:
       maxLength: 30
       example: "/photos/15"
 
-    PhotoFile:
+    ImageFile:
       description: Raw bytes of an image file
       type: string
       format: binary
@@ -589,10 +599,10 @@ components:
       description: A photo file to upload
       type: object
       properties:
-        photo: { $ref: "#/components/schemas/PhotoFile" }
-      required: [photo]
+        image: { $ref: "#/components/schemas/ImageFile" }
+      required: [image]
 
-    ConversationPreview:
+    ConversationSummary:
       description: An element of the conversation list
       type: object
       properties:
@@ -648,6 +658,20 @@ components:
           minItems: 1
           maxItems: 1000
           items: { $ref: "#/components/schemas/User" }
+        lastMessage:
+          description: Preview of the latest message, if any
+          type: object
+          properties:
+            timestamp: { $ref: "#/components/schemas/Timestamp" }
+            preview:
+              description: First characters of the text, empty for photos
+              type: string
+              pattern: '^.*?$'
+              minLength: 0
+              maxLength: 50
+            isPhoto:
+              description: True if the message is a photo (show an icon)
+              type: boolean
         messages:
           description: Messages, newest first
           type: array
@@ -699,7 +723,7 @@ components:
       required: [id, sender, timestamp, status]
 
     NewMessage:
-      description: A message to send. At least one of text or photo is required
+      description: A message to send. At least one of text or image is required
       type: object
       properties:
         text:
@@ -708,7 +732,7 @@ components:
           pattern: '^.*?$'
           minLength: 1
           maxLength: 10000
-        photo: { $ref: "#/components/schemas/PhotoFile" }
+        image: { $ref: "#/components/schemas/ImageFile" }
     
     Comment:
       description: A reaction on a message
@@ -803,6 +827,6 @@ components:
       name: groupId
       in: path
       required: true
-      description: Group identifier
+      description: Group identifier (same as its conversation id)
       schema: { $ref: "#/components/schemas/ResourceId"}
 
