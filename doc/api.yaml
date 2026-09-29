@@ -65,6 +65,8 @@ paths:
                 type: object
                 properties:
                   identifier: { $ref: "#/components/schemas/ResourceId" }
+              example:
+                identifier: 42              
         "400": { $ref: "#/components/responses/BadRequest" }
         "500": { $ref: "#/components/responses/InternalServerError" }
     
@@ -179,6 +181,10 @@ paths:
                     maxItems: 1000
                     items: { $ref: "#/components/schemas/User" }
                 required: [users]
+              example:
+                users:
+                  - id: 42
+                    name: Maria
         "401": { $ref: "#/components/responses/Unauthorized" }
         "500": { $ref: "#/components/responses/InternalServerError" }
 
@@ -206,6 +212,11 @@ paths:
                     maxItems: 1000
                     items: { $ref: "#/components/schemas/ConversationSummary" }
                 required: [conversations]
+              example:
+                conversations:
+                  - id: 7
+                    type: direct
+                    name: Luca
         "401": { $ref: "#/components/responses/Unauthorized" }
         "500": { $ref: "#/components/responses/InternalServerError" }
     post:
@@ -578,6 +589,10 @@ components:
         name: { $ref: "#/components/schemas/Username" }
         photo: { $ref: "#/components/schemas/Photo" }
       required: [id, name]
+      example:
+        id: 42
+        name: Maria
+        photo: "/photos/2"
 
     Photo:
       description: |-
@@ -586,7 +601,7 @@ components:
       pattern: '^/photos/[0-9]+$'
       minLength: 9
       maxLength: 30
-      example: "/photos/15"
+      example: "/photos/2"
 
     ImageFile:
       description: Raw bytes of an image file
@@ -679,6 +694,15 @@ components:
           maxItems: 10000
           items: { $ref: "#/components/schemas/Message" }
       required: [id, type, name, members]
+      example:
+        id: 7
+        type: direct
+        name: Luca
+        members:
+          - id: 42
+            name: Maria
+          - id: 43
+            name: Luca
 
     Timestamp:
       description: A date and time
@@ -721,6 +745,14 @@ components:
           maxItems: 1000
           items: { $ref: "#/components/schemas/Comment" }
       required: [id, sender, timestamp, status]
+      example:
+        id: 3
+        timestamp: "2026-06-28T12:34:56Z"
+        sender:
+          id: 42
+          name: Maria
+        text: "Ciao!"
+        status: read
 
     NewMessage:
       description: A message to send. At least one of text or image is required
@@ -743,6 +775,13 @@ components:
         sender: { $ref: "#/components/schemas/User" }
         emoji: { $ref: "#/components/schemas/Emoji" }
       required: [id, timestamp, sender, emoji]
+      example:
+        id: 1
+        timestamp: "2026-06-28T12:34:56Z"
+        sender:
+          id: 42
+          name: Maria
+        emoji: "👍"
 
     Emoji:
       description: A reaction emoji
