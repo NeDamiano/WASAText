@@ -335,7 +335,7 @@ paths:
     post:
       tags: ["comment"]
       summary: Reacts to a message
-      description: Adds a reaction (an emoticon) to the message
+      description: Adds a reaction (an emoji) to the message
       operationId: commentMessage
       requestBody:
         description: The reaction
@@ -413,11 +413,110 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
 
+  /groups/{groupId}/members:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    post:
+      tags: ["group"]
+      summary: Adds a user to a group
+      description: |-
+        Adds another user to a group. Only members of the group can add
+        new members.
+      operationId: addToGroup
+      requestBody:
+        description: The user to add
+        required: true
+        content:
+          application/json:
+            schema:
+              description: User to add
+              type: object
+              properties:
+                userId: { $ref: "#/components/schemas/ResourceId" }
+              required: [userId]
+      responses:
+        "200":
+          description: User added
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Conversation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
 
+  /groups/{groupId}/members/me:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    delete:
+      tags: ["group"]
+      summary: Leaves a group
+      description: Removes the logged-in user from the group.
+      operationId: leaveGroup
+      responses:
+        "204":
+          description: Group left
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
 
+  /groups/{groupId}/name:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    put:
+      tags: ["group"]
+      summary: Renames a group
+      description: Sets a new name for the group.
+      operationId: setGroupName
+      requestBody:
+        description: The new group name
+        required: true
+        content:
+          application/json:
+            schema:
+              description: New name
+              type: object
+              properties:
+                name: { $ref: "#/components/schemas/GroupName" }
+              required: [name]
+      responses:
+        "200":
+          description: Group renamed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Conversation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
 
-
-
+  /groups/{groupId}/photo:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    put:
+      tags: ["group"]
+      summary: Changes the group photo
+      description: Uploads a new photo for the group.
+      operationId: setGroupPhoto
+      requestBody:
+        description: The new photo
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/PhotoUpload" }
+      responses:
+        "200":
+          description: Group photo updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Conversation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
 
 
 
@@ -476,7 +575,7 @@ components:
       type: string
       pattern: '^/photos/[0-9]+$'
       minLength: 9
-      maxLength: 32
+      maxLength: 30
       example: "/photos/15"
 
     PhotoFile:
@@ -634,7 +733,7 @@ components:
       type: string
       pattern: '^.*?$'
       minLength: 1
-      maxLength: 32
+      maxLength: 16
       example: WASA study group
 
 
@@ -699,5 +798,11 @@ components:
       required: true
       description: Photo identifier
       schema: { $ref: "#/components/schemas/ResourceId"}
-
     
+    GroupId:
+      name: groupId
+      in: path
+      required: true
+      description: Group identifier
+      schema: { $ref: "#/components/schemas/ResourceId"}
+
