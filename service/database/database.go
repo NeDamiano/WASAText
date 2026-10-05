@@ -40,6 +40,8 @@ import (
 type AppDatabase interface {
 	GetName() (string, error)
 	SetName(name string) error
+	GetUserByName(name string) (int64, error)
+	CreateUser(name string) (int64, error)
 
 	Ping() error
 }
@@ -55,15 +57,66 @@ func New(db *sql.DB) (AppDatabase, error) {
 		return nil, errors.New("database is required when building a AppDatabase")
 	}
 
-	// Check if table exists. If not, the database is empty, and we need to create the structure
-	var tableName string
-	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='example_table';`).Scan(&tableName)
-	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE example_table (id INTEGER NOT NULL PRIMARY KEY, name TEXT);`
-		_, err = db.Exec(sqlStmt)
-		if err != nil {
-			return nil, fmt.Errorf("error creating database structure: %w", err)
-		}
+	// Create table if it doesn't exist
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id INTEGER PRIMARY KEY,
+			name TEXT NOT NULL UNIQUE,
+			photo TEXT
+		);
+
+		CREATE TABLE IF NOT EXISTS conversations (
+			id INTEGER PRIMARY KEY,	
+			name TEXT,
+			is_group INTEGER NOT NULL DEFAULT 0,
+			photo TEXT,
+			CHECK (is_group = 0 OR is_group = 1)
+		);
+
+		CREATE TABLE IF NOT EXISTS members (
+			user_id INTEGER NOT NULL,
+			conversation_id INTEGER NOT NULL,
+			PRIMARY KEY (user_id, conversation_id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			FOREIGN KEY (conversation_id) REFERENCES conversations(id)
+		);
+		
+		CREATE TABLE IF NOT EXISTS messages (
+			id INTEGER PRIMARY KEY,
+			conversation_id INTEGER NOT NULL,
+			sender_id INTEGER NOT NULL,
+			timestamp DATETIME NOT NULL,
+			text TEXT,
+			photo TEXT,
+			forwarded INTEGER NOT NULL DEFAULT 0,
+			CHECK (text IS NOT NULL OR photo IS NOT NULL),
+			CHECK (forwarded = 0 OR forwarded = 1),
+			FOREIGN KEY (sender_id) REFERENCES users(id),
+			FOREIGN KEY (conversation_id) REFERENCES conversations(id)
+		);
+
+		CREATE TABLE IF NOT EXISTS message_status (
+			user_id INTEGER NOT NULL,
+			message_id INTEGER NOT NULL,
+			status INTEGER NOT NULL DEFAULT 0,
+			PRIMARY KEY (user_id, message_id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			FOREIGN KEY (message_id) REFERENCES messages(id),
+			CHECK (status = 0 OR status = 1 OR status = 2)
+		);
+
+		CREATE TABLE IF NOT EXISTS comments (
+			id INTEGER PRIMARY KEY,
+			message_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			emoji TEXT NOT NULL,
+			FOREIGN KEY (message_id) REFERENCES messages(id),
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		);
+
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("error creating database structure: %w", err)
 	}
 
 	return &appdbimpl{
