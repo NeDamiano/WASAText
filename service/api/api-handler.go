@@ -16,5 +16,15 @@ func (rt *_router) Handler() http.Handler {
 	//session
 	rt.router.POST("/session", rt.wrap(rt.doLogin))
 
+	//me
+	rt.router.PUT("/me/username", rt.wrap(rt.setMyUserName))
+	rt.router.PUT("/me/photo", rt.wrap(rt.setMyPhoto))
+
+	//users
+	rt.router.GET("/users", rt.wrap(rt.searchUsers))
+
+	//photos
+	rt.router.GET("/photos/:photoId", rt.wrap(rt.getPhoto))
+
 	return rt.router
 }

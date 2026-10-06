@@ -744,10 +744,9 @@ components:
           minItems: 0
           maxItems: 1000
           items: { $ref: "#/components/schemas/Comment" }
-      required: [id, sender, timestamp, status]
+      required: [id, sender, status]
       example:
         id: 3
-        timestamp: "2026-06-28T12:34:56Z"
         sender:
           id: 42
           name: Maria
@@ -771,13 +770,11 @@ components:
       type: object
       properties:
         id: { $ref: "#/components/schemas/ResourceId" }
-        timestamp: { $ref: "#/components/schemas/Timestamp" }
         sender: { $ref: "#/components/schemas/User" }
         emoji: { $ref: "#/components/schemas/Emoji" }
-      required: [id, timestamp, sender, emoji]
+      required: [id, sender, emoji]
       example:
         id: 1
-        timestamp: "2026-06-28T12:34:56Z"
         sender:
           id: 42
           name: Maria

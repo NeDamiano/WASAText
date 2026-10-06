@@ -40,8 +40,15 @@ import (
 type AppDatabase interface {
 	GetName() (string, error)
 	SetName(name string) error
+
+	//users
 	GetUserByName(name string) (int64, error)
 	CreateUser(name string) (int64, error)
+	UserExists(id int64) (bool, error)
+	SetUserName(id int64, name string) error
+	SearchUsers(text string) ([]User, error)
+	GetUserById(id int64) (User, error)
+	SetUserPhoto(id int64, photo string) error
 
 	Ping() error
 }
