@@ -378,6 +378,11 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: The user already reacted to this message
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
         "500": { $ref: "#/components/responses/InternalServerError" }
  
   /conversations/{conversationId}/messages/{messageId}/comments/{commentId}:
@@ -729,6 +734,7 @@ components:
         forwarded:
           description: True if the message was forwarded
           type: boolean
+        replyTo: { $ref: "#/components/schemas/ResourceId" }
         status:
           description: |-
             Delivery state. "received" = one checkmark, 
@@ -764,6 +770,7 @@ components:
           minLength: 1
           maxLength: 10000
         image: { $ref: "#/components/schemas/ImageFile" }
+        replyTo: { $ref: "#/components/schemas/ResourceId" }
     
     Comment:
       description: A reaction on a message

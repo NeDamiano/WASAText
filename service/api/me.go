@@ -16,13 +16,13 @@ type userNameRequest struct {
 }
 
 func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	//authenticate the user
+	// authenticate the user
 	id, ok := rt.authenticate(w, r, ctx)
 	if !ok {
 		return
 	}
 
-	//read body
+	// read body
 	var req userNameRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -31,14 +31,14 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	//check name length
+	// check name length
 	length := utf8.RuneCountInString(req.Name)
 	if length < 3 || length > 16 {
 		sendError(w, http.StatusBadRequest, "username must be 3-16 characters")
 		return
 	}
 
-	//check if name already in use
+	// check if name already in use
 	id2, err := rt.db.GetUserByName(req.Name)
 	if err == nil && id2 != id {
 		sendError(w, http.StatusConflict, "username already in use")
@@ -50,7 +50,7 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	//overwrite the username
+	// overwrite the username
 	err = rt.db.SetUserName(id, req.Name)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("setMyUserName: cannot update the username")

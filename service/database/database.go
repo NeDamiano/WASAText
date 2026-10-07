@@ -41,7 +41,7 @@ type AppDatabase interface {
 	GetName() (string, error)
 	SetName(name string) error
 
-	//users
+	// users
 	GetUserByName(name string) (int64, error)
 	CreateUser(name string) (int64, error)
 	UserExists(id int64) (bool, error)
@@ -96,10 +96,12 @@ func New(db *sql.DB) (AppDatabase, error) {
 			text TEXT,
 			photo TEXT,
 			forwarded INTEGER NOT NULL DEFAULT 0,
+			reply_to INTEGER,
 			CHECK (text IS NOT NULL OR photo IS NOT NULL),
 			CHECK (forwarded = 0 OR forwarded = 1),
 			FOREIGN KEY (sender_id) REFERENCES users(id),
-			FOREIGN KEY (conversation_id) REFERENCES conversations(id)
+			FOREIGN KEY (conversation_id) REFERENCES conversations(id),
+			FOREIGN KEY (reply_to) REFERENCES messages(id) ON DELETE SET NULL
 		);
 
 		CREATE TABLE IF NOT EXISTS message_status (
@@ -117,6 +119,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 			message_id INTEGER NOT NULL,
 			user_id INTEGER NOT NULL,
 			emoji TEXT NOT NULL,
+			UNIQUE (message_id, user_id),
 			FOREIGN KEY (message_id) REFERENCES messages(id),
 			FOREIGN KEY (user_id) REFERENCES users(id)
 		);

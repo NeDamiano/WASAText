@@ -24,7 +24,7 @@ type loginResponse struct {
 // doLogin logs in the user. If the user does not exist, it's created
 func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 
-	//read body
+	// read body
 	var req loginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -33,14 +33,14 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	//check name length
+	//  check name length
 	length := utf8.RuneCountInString(req.Name)
 	if length < 3 || length > 16 {
 		sendError(w, http.StatusBadRequest, "username must be 3-16 characters")
 		return
 	}
 
-	//get user id or create user
+	// get user id or create user
 	id, err := rt.db.GetUserByName(req.Name)
 	if errors.Is(err, database.ErrUserNotFound) {
 		id, err = rt.db.CreateUser(req.Name)
@@ -52,7 +52,7 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 	resp := loginResponse{Identifier: id}
 
-	//send response
+	// send response
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(resp)

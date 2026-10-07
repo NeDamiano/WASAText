@@ -13,17 +13,17 @@ func (rt *_router) Handler() http.Handler {
 	// Special routes
 	rt.router.GET("/liveness", rt.liveness)
 
-	//session
+	// session
 	rt.router.POST("/session", rt.wrap(rt.doLogin))
 
-	//me
+	// me
 	rt.router.PUT("/me/username", rt.wrap(rt.setMyUserName))
 	rt.router.PUT("/me/photo", rt.wrap(rt.setMyPhoto))
 
-	//users
+	// users
 	rt.router.GET("/users", rt.wrap(rt.searchUsers))
 
-	//photos
+	// photos
 	rt.router.GET("/photos/:photoId", rt.wrap(rt.getPhoto))
 
 	return rt.router
