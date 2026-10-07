@@ -49,6 +49,8 @@ type AppDatabase interface {
 	SearchUsers(text string) ([]User, error)
 	GetUserById(id int64) (User, error)
 	SetUserPhoto(id int64, photo string) error
+	CreatePhoto(data []byte) (int64, error)
+	GetPhoto(id int64) ([]byte, error)
 
 	Ping() error
 }
@@ -122,6 +124,11 @@ func New(db *sql.DB) (AppDatabase, error) {
 			UNIQUE (message_id, user_id),
 			FOREIGN KEY (message_id) REFERENCES messages(id),
 			FOREIGN KEY (user_id) REFERENCES users(id)
+		);
+
+		CREATE TABLE IF NOT EXISTS photos (
+			id INTEGER PRIMARY KEY,
+			data BLOB NOT NULL
 		);
 
 	`)

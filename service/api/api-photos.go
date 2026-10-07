@@ -4,21 +4,17 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
+	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
 	"github.com/julienschmidt/httprouter"
 )
 
-// photosDir is the folder where the photo files are saved
-const photosDir = "/tmp/wasatext-photos"
-
 const maxPhotoSize = 10000000
 
-// readImage reads the "image" field of a multipart/form-data request.
+// readImage reads the "image" field of a multipart/form-data request
 func readImage(r *http.Request) ([]byte, error) {
 	file, _, err := r.FormFile("image")
 	if err != nil {
@@ -39,32 +35,18 @@ func readImage(r *http.Request) ([]byte, error) {
 	return data, nil
 }
 
-// savePhoto writes the image in photosDir with a new numeric name
-func savePhoto(data []byte) (string, error) {
-	err := os.MkdirAll(photosDir, 0755)
-	if err != nil {
-		return "", err
-	}
-	name := strconv.FormatInt(time.Now().UnixNano(), 10)
-	err = os.WriteFile(photosDir+"/"+name, data, 0644)
-	if err != nil {
-		return "", err
-	}
-	return "/photos/" + name, nil
-}
-
-// getPhoto returns the image file with the given photoId
+// getPhoto returns the image with the given photoId (no Authorization needed)
 func (rt *_router) getPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	// read photoId from the path: it must be a number
 	photoId, err := strconv.ParseInt(ps.ByName("photoId"), 10, 64)
-	if err != nil || photoId < 1 {
+	if err != nil {
 		sendError(w, http.StatusNotFound, "photo not found")
 		return
 	}
 
-	// read the file
-	data, err := os.ReadFile(photosDir + "/" + strconv.FormatInt(photoId, 10))
-	if errors.Is(err, os.ErrNotExist) {
+	// read the image from the database
+	data, err := rt.db.GetPhoto(photoId)
+	if errors.Is(err, database.ErrPhotoNotFound) {
 		sendError(w, http.StatusNotFound, "photo not found")
 		return
 	}

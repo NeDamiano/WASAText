@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"unicode/utf8"
 
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
@@ -76,23 +77,23 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	// read the "image" field of the multipart/form-data body
+	// read the "image" field of request
 	data, err := readImage(r)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, "invalid image")
 		return
 	}
 
-	// save the image as a file in the photos folder
-	photoUrl, err := savePhoto(data)
+	// save the image in the photos table
+	photoId, err := rt.db.CreatePhoto(data)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("setMyPhoto: cannot save the photo")
 		sendError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	// save the photo URL in the database
-	err = rt.db.SetUserPhoto(id, photoUrl)
+	// save the photo URL in the user's row
+	err = rt.db.SetUserPhoto(id, "/photos/"+strconv.FormatInt(photoId, 10))
 	if err != nil {
 		ctx.Logger.WithError(err).Error("setMyPhoto: cannot update the photo")
 		sendError(w, http.StatusInternalServerError, "internal server error")
