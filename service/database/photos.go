@@ -9,7 +9,7 @@ var ErrPhotoNotFound = errors.New("photo not found")
 
 // CreatePhoto saves the image bytes in the photos table and returns the new photo id
 func (db *appdbimpl) CreatePhoto(data []byte) (int64, error) {
-	res, err := db.c.Exec("INSERT INTO photos (data) VALUES (?)", data)
+	res, err := db.c.Exec("INSERT INTO photos (id, data) VALUES (NULL, ?)", data)
 	if err != nil {
 		return 0, err
 	}

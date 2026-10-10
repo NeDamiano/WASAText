@@ -1,13 +1,23 @@
 package api
 
-import "time"
+import (
+	"time"
 
-// Structs sent as JSON in the responses.
+	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
+)
+
+// Structs sent as JSON in the responses
 
 type User struct {
 	Id    int64  `json:"id"`
 	Name  string `json:"name"`
 	Photo string `json:"photo,omitempty"`
+}
+
+func (u *User) FromDatabase(dbUser database.User) {
+	u.Id = dbUser.Id
+	u.Name = dbUser.Name
+	u.Photo = dbUser.Photo
 }
 
 type LastMessage struct {
@@ -41,6 +51,7 @@ type Message struct {
 	Text      string    `json:"text,omitempty"`
 	Photo     string    `json:"photo,omitempty"`
 	Forwarded bool      `json:"forwarded"`
+	ReplyTo   *Message  `json:"replyTo,omitempty"`
 	Status    string    `json:"status"` // sent, received or read
 	Comments  []Comment `json:"comments,omitempty"`
 }

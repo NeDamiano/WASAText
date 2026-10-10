@@ -37,7 +37,7 @@ func readImage(r *http.Request) ([]byte, error) {
 
 // getPhoto returns the image with the given photoId (no Authorization needed)
 func (rt *_router) getPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	// read photoId from the path: it must be a number
+	// read photoId from the path
 	photoId, err := strconv.ParseInt(ps.ByName("photoId"), 10, 64)
 	if err != nil {
 		sendError(w, http.StatusNotFound, "photo not found")
@@ -56,11 +56,8 @@ func (rt *_router) getPhoto(w http.ResponseWriter, r *http.Request, ps httproute
 		return
 	}
 
-	// respond 200 with the image bytes
+	// respond 200 with the image
 	w.Header().Set("content-type", http.DetectContentType(data))
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(data)
-	if err != nil {
-		ctx.Logger.WithError(err).Error("getPhoto: cannot write the response")
-	}
+	_, _ = w.Write(data)
 }

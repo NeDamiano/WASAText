@@ -7,6 +7,19 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 
+// GetUserById returns the user with the given id
+func (db *appdbimpl) GetUserById(id int64) (User, error) {
+	var u User
+	err := db.c.QueryRow("SELECT id, name, COALESCE(photo, '') FROM users WHERE id = ?", id).Scan(&u.Id, &u.Name, &u.Photo)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return u, ErrUserNotFound
+		}
+		return u, err
+	}
+	return u, nil
+}
+
 // GetUserByName returns the id of the user with the given name
 func (db *appdbimpl) GetUserByName(name string) (int64, error) {
 	var id int64
@@ -22,7 +35,7 @@ func (db *appdbimpl) GetUserByName(name string) (int64, error) {
 
 // CreateUser creates a new user with the given name and returns its id
 func (db *appdbimpl) CreateUser(name string) (int64, error) {
-	res, err := db.c.Exec("INSERT INTO users (name) VALUES (?)", name)
+	res, err := db.c.Exec("INSERT INTO users (id, name, photo) VALUES (NULL, ?, NULL)", name)
 	if err != nil {
 		return 0, err
 	}
@@ -49,7 +62,7 @@ func (db *appdbimpl) SetUserName(id int64, name string) error {
 	return err
 }
 
-// User is a user in the database (no photo = "")
+// User in the database (no photo = "")
 type User struct {
 	Id    int64
 	Name  string
@@ -78,19 +91,6 @@ func (db *appdbimpl) SearchUsers(text string) ([]User, error) {
 		return nil, err
 	}
 	return users, nil
-}
-
-// GetUserById returns the user with the given id
-func (db *appdbimpl) GetUserById(id int64) (User, error) {
-	var u User
-	err := db.c.QueryRow("SELECT id, name, COALESCE(photo, '') FROM users WHERE id = ?", id).Scan(&u.Id, &u.Name, &u.Photo)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return u, ErrUserNotFound
-		}
-		return u, err
-	}
-	return u, nil
 }
 
 // SetUserPhoto saves the URL of the user's photo

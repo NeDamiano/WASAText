@@ -26,5 +26,8 @@ func (rt *_router) Handler() http.Handler {
 	// photos
 	rt.router.GET("/photos/:photoId", rt.wrap(rt.getPhoto))
 
+	// conversations
+	rt.router.POST("/conversations", rt.wrap(rt.startConversation))
+
 	return rt.router
 }

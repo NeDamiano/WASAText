@@ -134,9 +134,7 @@ paths:
       summary: Downloads a photo
       description: |-
         Returns the image file (profile, group or message photo). JSON
-        objects only contain the URL of this endpoint. 
-        It needs no Authorization header, so anyone can see
-        the photo if they know the URL
+        objects only contain the URL of the photo 
       operationId: getPhoto
       security: []
       responses:
@@ -447,7 +445,7 @@ paths:
       summary: Adds a user to a group
       description: |-
         Adds another user to a group. Only members of the group can add
-        new members.
+        new members
       operationId: addToGroup
       requestBody:
         description: The user to add
@@ -493,7 +491,7 @@ paths:
     put:
       tags: ["group"]
       summary: Renames a group
-      description: Sets a new name for the group.
+      description: Sets a new name for the group
       operationId: setGroupName
       requestBody:
         description: The new group name
@@ -524,7 +522,7 @@ paths:
     put:
       tags: ["group"]
       summary: Changes the group photo
-      description: Uploads a new photo for the group.
+      description: Uploads a new photo for the group
       operationId: setGroupPhoto
       requestBody:
         description: The new photo
