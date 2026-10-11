@@ -5,8 +5,6 @@ import (
 	"errors"
 )
 
-var ErrConversationNotFound = errors.New("conversation not found")
-
 // GetDirectConversation returns the id of a conversation between 2 given users
 func (db *appdbimpl) GetDirectConversation(user1, user2 int64) (int64, error) {
 	var id int64
@@ -43,4 +41,36 @@ func (db *appdbimpl) CreateDirectConversation(user1 int64, user2 int64) (int64, 
 	}
 
 	return convId, nil
+}
+
+// GetMyConversations returns the list of conversations of the logged in user
+// (left joins so group chats aren't excluded while looking for the other user's name for private chats)
+func (db *appdbimpl) GetMyConversations(userId int64) ([]ConversationSummary, error) {
+	rows, err := db.c.Query(`
+		SELECT c.id, c.is_group, COALESCE(c.name, u.name), COALESCE(c.photo, u.photo, '')
+		FROM members m
+		JOIN conversations c ON c.id = m.conversation_id
+		LEFT JOIN members m2 ON m2.conversation_id = c.id AND m2.user_id != m.user_id AND c.is_group = 0 
+		LEFT JOIN users u ON u.id = m2.user_id
+		WHERE m.user_id = ?`, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	conversations := []ConversationSummary{}
+	for rows.Next() {
+		var conv ConversationSummary
+		err = rows.Scan(&conv.Id, &conv.IsGroup, &conv.Name, &conv.Photo)
+		if err != nil {
+			return nil, err
+		}
+		conversations = append(conversations, conv)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return conversations, nil
 }

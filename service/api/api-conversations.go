@@ -47,7 +47,7 @@ func (rt *_router) startConversation(w http.ResponseWriter, r *http.Request, ps 
 	}
 
 	// look for existing conversation, or create it
-	status := http.StatusOK
+	var status = http.StatusOK
 	convId, err := rt.db.GetDirectConversation(id, other.Id)
 	if errors.Is(err, database.ErrConversationNotFound) {
 		convId, err = rt.db.CreateDirectConversation(id, other.Id)
@@ -82,5 +82,36 @@ func (rt *_router) startConversation(w http.ResponseWriter, r *http.Request, ps 
 	// responds 200 or 201 with the conversation
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+// getMyConversationsResponse returns the logged-in user conversaions
+type getMyConversationsResponse struct {
+	Conversations []ConversationSummary `json:"conversations"`
+}
+
+func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+
+	id, ok := rt.authenticate(w, r, ctx)
+	if !ok {
+		return
+	}
+
+	dbConvs, err := rt.db.GetMyConversations(id)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("getMyConversations: cannot read the conversations")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	resp := getMyConversationsResponse{Conversations: []ConversationSummary{}}
+	for _, dbConv := range dbConvs {
+		conv := ConversationSummary{}
+		conv.FromDatabase(dbConv)
+		resp.Conversations = append(resp.Conversations, conv)
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(resp)
 }

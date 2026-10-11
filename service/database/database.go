@@ -55,6 +55,7 @@ type AppDatabase interface {
 	// conversations
 	GetDirectConversation(user1, user2 int64) (int64, error)
 	CreateDirectConversation(user1 int64, user2 int64) (int64, error)
+	GetMyConversations(userId int64) ([]ConversationSummary, error)
 
 	Ping() error
 }

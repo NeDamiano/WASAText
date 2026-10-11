@@ -5,8 +5,6 @@ import (
 	"errors"
 )
 
-var ErrUserNotFound = errors.New("user not found")
-
 // GetUserById returns the user with the given id
 func (db *appdbimpl) GetUserById(id int64) (User, error) {
 	var u User
@@ -60,13 +58,6 @@ func (db *appdbimpl) UserExists(id int64) (bool, error) {
 func (db *appdbimpl) SetUserName(id int64, name string) error {
 	_, err := db.c.Exec("UPDATE users SET name = ? WHERE id = ?", name, id)
 	return err
-}
-
-// User in the database (no photo = "")
-type User struct {
-	Id    int64
-	Name  string
-	Photo string
 }
 
 // SearchUsers returns the users whose name contains text (no text = all users)

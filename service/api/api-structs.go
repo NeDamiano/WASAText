@@ -34,6 +34,16 @@ type ConversationSummary struct {
 	LastMessage *LastMessage `json:"lastMessage,omitempty"`
 }
 
+func (c *ConversationSummary) FromDatabase(dbConv database.ConversationSummary) {
+	c.Id = dbConv.Id
+	c.Name = dbConv.Name
+	c.Photo = dbConv.Photo
+	c.Type = "direct"
+	if dbConv.IsGroup {
+		c.Type = "group"
+	}
+}
+
 type Conversation struct {
 	Id          int64        `json:"id"`
 	Type        string       `json:"type"` // direct or group
