@@ -56,6 +56,8 @@ type AppDatabase interface {
 	GetDirectConversation(user1, user2 int64) (int64, error)
 	CreateDirectConversation(user1 int64, user2 int64) (int64, error)
 	GetMyConversations(userId int64) ([]ConversationSummary, error)
+	GetConversation(convId int64, userId int64) (ConversationSummary, error)
+	GetMembers(convId int64) ([]User, error)
 
 	Ping() error
 }

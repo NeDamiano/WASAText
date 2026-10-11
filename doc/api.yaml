@@ -213,7 +213,7 @@ paths:
               example:
                 conversations:
                   - id: 7
-                    type: direct
+                    isGroup: false
                     name: Luca
         "401": { $ref: "#/components/responses/Unauthorized" }
         "500": { $ref: "#/components/responses/InternalServerError" }
@@ -625,7 +625,9 @@ components:
       type: object
       properties:
         id: { $ref: "#/components/schemas/ResourceId" }
-        type: { $ref: "#/components/schemas/ConversationType" }
+        isGroup:
+          description: True for a group, false for a private conversation
+          type: boolean
         name:
           description: Other user's username, or the group name
           type: string
@@ -647,22 +649,16 @@ components:
             isPhoto:
               description: True if the message is a photo (show an icon)
               type: boolean
-      required: [id, type, name]
- 
-    ConversationType:
-      description: Private  or group conversation
-      type: string
-      enum: 
-        - direct 
-        - group
-      example: direct
+      required: [id, isGroup, name]
  
     Conversation:
       description: A conversation with its members and messages
       type: object
       properties:
         id: { $ref: "#/components/schemas/ResourceId" }
-        type: { $ref: "#/components/schemas/ConversationType" }
+        isGroup:
+          description: True for a group, false for a private conversation
+          type: boolean
         name:
           description: Other user's username, or the group name
           type: string
@@ -696,10 +692,10 @@ components:
           minItems: 0
           maxItems: 10000
           items: { $ref: "#/components/schemas/Message" }
-      required: [id, type, name, members]
+      required: [id, isGroup, name, members]
       example:
         id: 7
-        type: direct
+        isGroup: false
         name: Luca
         members:
           - id: 42

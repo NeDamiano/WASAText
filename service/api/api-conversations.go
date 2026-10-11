@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
@@ -73,7 +74,7 @@ func (rt *_router) startConversation(w http.ResponseWriter, r *http.Request, ps 
 
 	resp := Conversation{
 		Id:      convId,
-		Type:    "direct",
+		IsGroup: false,
 		Name:    other.Name,
 		Photo:   other.Photo,
 		Members: []User{meUser, otherUser},
@@ -85,11 +86,11 @@ func (rt *_router) startConversation(w http.ResponseWriter, r *http.Request, ps 
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-// getMyConversationsResponse returns the logged-in user conversaions
 type getMyConversationsResponse struct {
 	Conversations []ConversationSummary `json:"conversations"`
 }
 
+// getMyConversations returns the logged-in user conversaions
 func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 
 	id, ok := rt.authenticate(w, r, ctx)
@@ -111,6 +112,61 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 		resp.Conversations = append(resp.Conversations, conv)
 	}
 
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+// getConversation returns one conversation of the logged-in user, with its members
+func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	id, ok := rt.authenticate(w, r, ctx)
+	if !ok {
+		return
+	}
+
+	convId, err := strconv.ParseInt(ps.ByName("conversationId"), 10, 64)
+	if err != nil {
+		sendError(w, http.StatusNotFound, "conversation not found")
+		return
+	}
+
+	dbConv, err := rt.db.GetConversation(convId, id)
+	if errors.Is(err, database.ErrConversationNotFound) {
+		sendError(w, http.StatusNotFound, "conversation not found")
+		return
+	}
+	if err != nil {
+		ctx.Logger.WithError(err).Error("getConversation: cannot read the conversation")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	// read the members
+	dbMembers, err := rt.db.GetMembers(convId)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("getConversation: cannot read the members")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	summary := ConversationSummary{}
+	summary.FromDatabase(dbConv)
+
+	resp := Conversation{
+		Id:       summary.Id,
+		IsGroup:  summary.IsGroup,
+		Name:     summary.Name,
+		Photo:    summary.Photo,
+		Members:  []User{},
+		Messages: []Message{},
+	}
+	for _, dbMember := range dbMembers {
+		member := User{}
+		member.FromDatabase(dbMember)
+		resp.Members = append(resp.Members, member)
+	}
+
+	// responds 200 with the conversation
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(resp)

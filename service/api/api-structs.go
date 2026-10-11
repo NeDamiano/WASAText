@@ -28,7 +28,7 @@ type LastMessage struct {
 
 type ConversationSummary struct {
 	Id          int64        `json:"id"`
-	Type        string       `json:"type"` // direct or group
+	IsGroup     bool         `json:"isGroup"`
 	Name        string       `json:"name"`
 	Photo       string       `json:"photo,omitempty"`
 	LastMessage *LastMessage `json:"lastMessage,omitempty"`
@@ -36,17 +36,14 @@ type ConversationSummary struct {
 
 func (c *ConversationSummary) FromDatabase(dbConv database.ConversationSummary) {
 	c.Id = dbConv.Id
+	c.IsGroup = dbConv.IsGroup
 	c.Name = dbConv.Name
 	c.Photo = dbConv.Photo
-	c.Type = "direct"
-	if dbConv.IsGroup {
-		c.Type = "group"
-	}
 }
 
 type Conversation struct {
 	Id          int64        `json:"id"`
-	Type        string       `json:"type"` // direct or group
+	IsGroup     bool         `json:"isGroup"`
 	Name        string       `json:"name"`
 	Photo       string       `json:"photo,omitempty"`
 	Members     []User       `json:"members"`
@@ -61,7 +58,7 @@ type Message struct {
 	Text      string    `json:"text,omitempty"`
 	Photo     string    `json:"photo,omitempty"`
 	Forwarded bool      `json:"forwarded"`
-	ReplyTo   *Message  `json:"replyTo,omitempty"`
+	ReplyTo   int64     `json:"replyTo,omitempty"`
 	Status    string    `json:"status"` // sent, received or read
 	Comments  []Comment `json:"comments,omitempty"`
 }

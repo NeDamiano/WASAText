@@ -74,3 +74,51 @@ func (db *appdbimpl) GetMyConversations(userId int64) ([]ConversationSummary, er
 
 	return conversations, nil
 }
+
+// GetConversation returns the logged-in user's conversation with given id (same query as GetMyConversations, plus c.id)
+func (db *appdbimpl) GetConversation(convId int64, userId int64) (ConversationSummary, error) {
+	var conv ConversationSummary
+	err := db.c.QueryRow(`
+		SELECT c.id, c.is_group, COALESCE(c.name, u.name), COALESCE(c.photo, u.photo, '')
+		FROM members m
+		JOIN conversations c ON c.id = m.conversation_id
+		LEFT JOIN members m2 ON m2.conversation_id = c.id AND m2.user_id != m.user_id AND c.is_group = 0
+		LEFT JOIN users u ON u.id = m2.user_id
+		WHERE m.user_id = ? AND c.id = ?`, userId, convId).Scan(&conv.Id, &conv.IsGroup, &conv.Name, &conv.Photo)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return conv, ErrConversationNotFound
+		}
+		return conv, err
+	}
+	return conv, nil
+}
+
+// GetMembers returns the users in the conversation
+func (db *appdbimpl) GetMembers(convId int64) ([]User, error) {
+	rows, err := db.c.Query(`
+		SELECT u.id, u.name, COALESCE(u.photo, '')
+		FROM members m
+		JOIN users u ON u.id = m.user_id
+		WHERE m.conversation_id = ?
+		ORDER BY u.name`, convId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	members := []User{}
+	for rows.Next() {
+		var u User
+		err = rows.Scan(&u.Id, &u.Name, &u.Photo)
+		if err != nil {
+			return nil, err
+		}
+		members = append(members, u)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return members, nil
+}
