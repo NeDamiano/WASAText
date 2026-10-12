@@ -60,24 +60,11 @@ func (rt *_router) startConversation(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	// read the logged-in user (for the members list)
-	me, err := rt.db.GetUserById(id)
-	if err != nil {
-		ctx.Logger.WithError(err).Error("startConversation: cant read the logged-in user")
-		sendError(w, http.StatusInternalServerError, "internal server error")
-		return
-	}
-
-	var meUser, otherUser User
-	meUser.FromDatabase(me)
-	otherUser.FromDatabase(other)
-
 	resp := Conversation{
 		Id:      convId,
 		IsGroup: false,
 		Name:    other.Name,
 		Photo:   other.Photo,
-		Members: []User{meUser, otherUser},
 	}
 
 	// responds 200 or 201 with the conversation
@@ -95,6 +82,14 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 
 	id, ok := rt.authenticate(w, r, ctx)
 	if !ok {
+		return
+	}
+
+	// downloading the list means the new messages have been received
+	err := rt.db.MarkAsReceived(id)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("getMyConversations: cannot mark the messages as received")
+		sendError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -117,7 +112,7 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, ps
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-// getConversation returns one conversation of the logged-in user, with its members
+// getConversation returns one conversation of the logged-in user, with its messages
 func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	id, ok := rt.authenticate(w, r, ctx)
 	if !ok {
@@ -141,10 +136,17 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 		return
 	}
 
-	// read the members
-	dbMembers, err := rt.db.GetMembers(convId)
+	// opening the conversation marks its messages as read
+	err = rt.db.MarkAsRead(convId, id)
 	if err != nil {
-		ctx.Logger.WithError(err).Error("getConversation: cannot read the members")
+		ctx.Logger.WithError(err).Error("getConversation: cannot mark the messages as read")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	dbMsgs, err := rt.db.GetMessages(convId)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("getConversation: cannot read the messages")
 		sendError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -157,16 +159,15 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 		IsGroup:  summary.IsGroup,
 		Name:     summary.Name,
 		Photo:    summary.Photo,
-		Members:  []User{},
 		Messages: []Message{},
 	}
-	for _, dbMember := range dbMembers {
-		member := User{}
-		member.FromDatabase(dbMember)
-		resp.Members = append(resp.Members, member)
+
+	for _, dbMsg := range dbMsgs {
+		msg := Message{}
+		msg.FromDatabase(dbMsg)
+		resp.Messages = append(resp.Messages, msg)
 	}
 
-	// responds 200 with the conversation
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(resp)

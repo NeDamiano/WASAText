@@ -57,7 +57,13 @@ type AppDatabase interface {
 	CreateDirectConversation(user1 int64, user2 int64) (int64, error)
 	GetMyConversations(userId int64) ([]ConversationSummary, error)
 	GetConversation(convId int64, userId int64) (ConversationSummary, error)
-	GetMembers(convId int64) ([]User, error)
+
+	// messages
+	CreateMessage(convId int64, senderId int64, text string, photo string, replyTo int64) (Message, error)
+	MessageExists(msgId int64, convId int64) (bool, error)
+	GetMessages(convId int64) ([]Message, error)
+	MarkAsRead(convId int64, userId int64) error
+	MarkAsReceived(userId int64) error
 
 	Ping() error
 }

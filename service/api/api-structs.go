@@ -39,16 +39,25 @@ func (c *ConversationSummary) FromDatabase(dbConv database.ConversationSummary) 
 	c.IsGroup = dbConv.IsGroup
 	c.Name = dbConv.Name
 	c.Photo = dbConv.Photo
+	if dbConv.HasLastMessage {
+		preview := []rune(dbConv.LastText)
+		if len(preview) > 50 {
+			preview = preview[:50]
+		}
+		c.LastMessage = &LastMessage{
+			Timestamp: dbConv.LastTimestamp,
+			Preview:   string(preview),
+			IsPhoto:   dbConv.LastIsPhoto,
+		}
+	}
 }
 
 type Conversation struct {
-	Id          int64        `json:"id"`
-	IsGroup     bool         `json:"isGroup"`
-	Name        string       `json:"name"`
-	Photo       string       `json:"photo,omitempty"`
-	Members     []User       `json:"members"`
-	LastMessage *LastMessage `json:"lastMessage,omitempty"`
-	Messages    []Message    `json:"messages,omitempty"`
+	Id       int64     `json:"id"`
+	IsGroup  bool      `json:"isGroup"`
+	Name     string    `json:"name"`
+	Photo    string    `json:"photo,omitempty"`
+	Messages []Message `json:"messages,omitempty"`
 }
 
 type Message struct {
@@ -61,6 +70,23 @@ type Message struct {
 	ReplyTo   int64     `json:"replyTo,omitempty"`
 	Status    string    `json:"status"` // sent, received or read
 	Comments  []Comment `json:"comments,omitempty"`
+}
+
+func (m *Message) FromDatabase(dbMsg database.Message) {
+	m.Id = dbMsg.Id
+	m.Timestamp = dbMsg.Timestamp
+	m.Sender.FromDatabase(dbMsg.Sender)
+	m.Text = dbMsg.Text
+	m.Photo = dbMsg.Photo
+	m.Forwarded = dbMsg.Forwarded
+	m.ReplyTo = dbMsg.ReplyTo
+	m.Status = "sent"
+	if dbMsg.Status == 1 {
+		m.Status = "received"
+	}
+	if dbMsg.Status == 2 {
+		m.Status = "read"
+	}
 }
 
 type Comment struct {
