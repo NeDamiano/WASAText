@@ -59,11 +59,14 @@ type AppDatabase interface {
 	GetConversation(convId int64, userId int64) (ConversationSummary, error)
 
 	// messages
-	CreateMessage(convId int64, senderId int64, text string, photo string, replyTo int64) (Message, error)
+	CreateMessage(convId int64, senderId int64, text string, photo string, replyTo int64, forwarded bool) (Message, error)
 	MessageExists(msgId int64, convId int64) (bool, error)
 	GetMessages(convId int64) ([]Message, error)
 	MarkAsRead(convId int64, userId int64) error
 	MarkAsReceived(userId int64) error
+	GetMessageSender(msgId int64, convId int64) (int64, error)
+	DeleteMessage(msgId int64) error
+	GetMessage(msgId int64, convId int64) (Message, error)
 
 	Ping() error
 }
@@ -125,7 +128,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 			status INTEGER NOT NULL DEFAULT 0,
 			PRIMARY KEY (user_id, message_id),
 			FOREIGN KEY (user_id) REFERENCES users(id),
-			FOREIGN KEY (message_id) REFERENCES messages(id),
+			FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
 			CHECK (status = 0 OR status = 1 OR status = 2)
 		);
 
@@ -135,7 +138,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 			user_id INTEGER NOT NULL,
 			emoji TEXT NOT NULL,
 			UNIQUE (message_id, user_id),
-			FOREIGN KEY (message_id) REFERENCES messages(id),
+			FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
 			FOREIGN KEY (user_id) REFERENCES users(id)
 		);
 

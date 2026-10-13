@@ -1,16 +1,20 @@
 package database
 
-import "time"
+import (
+	"database/sql"
+	"errors"
+	"time"
+)
 
 // CreateMessage saves a new message and a "sent" status (0) for the other members
-func (db *appdbimpl) CreateMessage(convId int64, senderId int64, text string, photo string, replyTo int64) (Message, error) {
+func (db *appdbimpl) CreateMessage(convId int64, senderId int64, text string, photo string, replyTo int64, forwarded bool) (Message, error) {
 	timestamp := time.Now().UTC()
 
 	// empty text, photo or replyTo are saved as NULL
 	res, err := db.c.Exec(`
 		INSERT INTO messages (id, conversation_id, sender_id, timestamp, text, photo, forwarded, reply_to)
-		VALUES (NULL, ?, ?, ?, NULLIF(?, ''), NULLIF(?, ''), 0, NULLIF(?, 0))`,
-		convId, senderId, timestamp, text, photo, replyTo)
+		VALUES (NULL, ?, ?, ?, NULLIF(?, ''), NULLIF(?, ''), ?, NULLIF(?, 0))`,
+		convId, senderId, timestamp, text, photo, forwarded, replyTo)
 	if err != nil {
 		return Message{}, err
 	}
@@ -35,7 +39,7 @@ func (db *appdbimpl) CreateMessage(convId int64, senderId int64, text string, ph
 		Timestamp: timestamp,
 		Text:      text,
 		Photo:     photo,
-		Forwarded: false,
+		Forwarded: forwarded,
 		ReplyTo:   replyTo,
 	}
 	return msg, nil
@@ -49,6 +53,20 @@ func (db *appdbimpl) MessageExists(msgId int64, convId int64) (bool, error) {
 		return false, err
 	}
 	return exists, nil
+}
+
+// GetMessage returns text and photo of a message of the conversation
+func (db *appdbimpl) GetMessage(msgId int64, convId int64) (Message, error) {
+	var msg Message
+	err := db.c.QueryRow("SELECT id, COALESCE(text, ''), COALESCE(photo, '') FROM messages WHERE id = ? AND conversation_id = ?",
+		msgId, convId).Scan(&msg.Id, &msg.Text, &msg.Photo)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return msg, ErrMessageNotFound
+		}
+		return msg, err
+	}
+	return msg, nil
 }
 
 // GetMessages returns the messages of the conversation (newest first) with their sender and status
@@ -83,17 +101,36 @@ func (db *appdbimpl) GetMessages(convId int64) ([]Message, error) {
 	return messages, nil
 }
 
+// MarkAsReceived sets status 1 (received) on all the user's statuses still at 0 (sent)
+func (db *appdbimpl) MarkAsReceived(userId int64) error {
+	_, err := db.c.Exec("UPDATE message_status SET status = 1 WHERE user_id = ? AND status = 0", userId)
+	return err
+}
+
 // MarkAsRead sets status 2 (read) on the user's statuses in the conversation
 func (db *appdbimpl) MarkAsRead(convId int64, userId int64) error {
 	_, err := db.c.Exec(`
 		UPDATE message_status SET status = 2
-		WHERE user_id = ? AND message_id IN (SELECT id FROM messages WHERE conversation_id = ?)`,
+		WHERE user_id = ? AND status < 2 AND message_id IN (SELECT id FROM messages WHERE conversation_id = ?)`,
 		userId, convId)
 	return err
 }
 
-// MarkAsReceived sets status 1 (received) on all the user's statuses still at 0 (sent)
-func (db *appdbimpl) MarkAsReceived(userId int64) error {
-	_, err := db.c.Exec("UPDATE message_status SET status = 1 WHERE user_id = ? AND status = 0", userId)
+// GetMessageSender returns the id of the user who sent the message
+func (db *appdbimpl) GetMessageSender(msgId int64, convId int64) (int64, error) {
+	var senderId int64
+	err := db.c.QueryRow("SELECT sender_id FROM messages WHERE id = ? AND conversation_id = ?", msgId, convId).Scan(&senderId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, ErrMessageNotFound
+		}
+		return 0, err
+	}
+	return senderId, nil
+}
+
+// DeleteMessage deletes a message (status and comments are deleted by cascade)
+func (db *appdbimpl) DeleteMessage(msgId int64) error {
+	_, err := db.c.Exec("DELETE FROM messages WHERE id = ?", msgId)
 	return err
 }
