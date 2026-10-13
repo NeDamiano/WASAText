@@ -33,3 +33,10 @@ type Message struct {
 	ReplyTo   int64
 	Status    int // 0 sent, 1 received, 2 read
 }
+
+type Comment struct {
+	Id        int64
+	MessageId int64
+	Sender    User
+	Emoji     string
+}

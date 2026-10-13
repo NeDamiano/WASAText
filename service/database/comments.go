@@ -42,3 +42,32 @@ func (db *appdbimpl) DeleteComment(commentId int64) error {
 	_, err := db.c.Exec("DELETE FROM comments WHERE id = ?", commentId)
 	return err
 }
+
+// GetComments returns the reactions on the messages of the conversation
+func (db *appdbimpl) GetComments(convId int64) ([]Comment, error) {
+	rows, err := db.c.Query(`
+		SELECT c.id, c.message_id, u.id, u.name, c.emoji
+		FROM comments c
+		JOIN messages m ON m.id = c.message_id
+		JOIN users u ON u.id = c.user_id
+		WHERE m.conversation_id = ?`, convId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	comments := []Comment{}
+	for rows.Next() {
+		var c Comment
+		err = rows.Scan(&c.Id, &c.MessageId, &c.Sender.Id, &c.Sender.Name, &c.Emoji)
+		if err != nil {
+			return nil, err
+		}
+		comments = append(comments, c)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return comments, nil
+}

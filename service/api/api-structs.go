@@ -94,3 +94,9 @@ type Comment struct {
 	Sender User   `json:"sender"`
 	Emoji  string `json:"emoji"`
 }
+
+func (c *Comment) FromDatabase(dbComment database.Comment) {
+	c.Id = dbComment.Id
+	c.Sender.FromDatabase(dbComment.Sender)
+	c.Emoji = dbComment.Emoji
+}

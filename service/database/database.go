@@ -73,6 +73,7 @@ type AppDatabase interface {
 	CreateComment(msgId int64, userId int64, emoji string) (int64, error)
 	GetCommentSender(commentId int64, msgId int64) (int64, error)
 	DeleteComment(commentId int64) error
+	GetComments(convId int64) ([]Comment, error)
 
 	Ping() error
 }

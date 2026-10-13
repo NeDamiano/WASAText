@@ -151,6 +151,13 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 		return
 	}
 
+	dbComments, err := rt.db.GetComments(convId)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("getConversation: cannot read the reactions")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
 	summary := ConversationSummary{}
 	summary.FromDatabase(dbConv)
 
@@ -162,9 +169,18 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 		Messages: []Message{},
 	}
 
+	// convert each message and attach its reactions
 	for _, dbMsg := range dbMsgs {
 		msg := Message{}
 		msg.FromDatabase(dbMsg)
+		// the reactions of the whole conversation are read once, keep only this message's ones
+		for _, dbComment := range dbComments {
+			if dbComment.MessageId == msg.Id {
+				comment := Comment{}
+				comment.FromDatabase(dbComment)
+				msg.Comments = append(msg.Comments, comment)
+			}
+		}
 		resp.Messages = append(resp.Messages, msg)
 	}
 
