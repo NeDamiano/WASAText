@@ -36,5 +36,9 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.DELETE("/conversations/:conversationId/messages/:messageId", rt.wrap(rt.deleteMessage))
 	rt.router.POST("/conversations/:conversationId/messages/:messageId/forwards", rt.wrap(rt.forwardMessage))
 
+	// comments
+	rt.router.POST("/conversations/:conversationId/messages/:messageId/comments", rt.wrap(rt.commentMessage))
+	rt.router.DELETE("/conversations/:conversationId/messages/:messageId/comments/:commentId", rt.wrap(rt.uncommentMessage))
+
 	return rt.router
 }

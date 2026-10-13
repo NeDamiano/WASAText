@@ -68,6 +68,12 @@ type AppDatabase interface {
 	DeleteMessage(msgId int64) error
 	GetMessage(msgId int64, convId int64) (Message, error)
 
+	// comments
+	CommentExists(msgId int64, userId int64) (bool, error)
+	CreateComment(msgId int64, userId int64, emoji string) (int64, error)
+	GetCommentSender(commentId int64, msgId int64) (int64, error)
+	DeleteComment(commentId int64) error
+
 	Ping() error
 }
 

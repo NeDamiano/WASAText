@@ -81,7 +81,8 @@ func (db *appdbimpl) GetMyConversations(userId int64) ([]ConversationSummary, er
 	return convs, nil
 }
 
-// GetConversation returns the logged-in(userId) user's conversation(convId)
+// GetConversation returns the logged-in user(userId)'s conversation(convId) summary
+// (also for checking if a user is member of the conversation)
 func (db *appdbimpl) GetConversation(convId int64, userId int64) (ConversationSummary, error) {
 	var conv ConversationSummary
 	err := db.c.QueryRow(`
