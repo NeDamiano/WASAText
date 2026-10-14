@@ -158,16 +158,9 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 		return
 	}
 
-	summary := ConversationSummary{}
-	summary.FromDatabase(dbConv)
-
-	resp := Conversation{
-		Id:       summary.Id,
-		IsGroup:  summary.IsGroup,
-		Name:     summary.Name,
-		Photo:    summary.Photo,
-		Messages: []Message{},
-	}
+	// copy id, isGroup, name and photo from the database struct to response struct
+	resp := Conversation{}
+	resp.FromDatabase(dbConv)
 
 	// convert each message and attach its reactions
 	for _, dbMsg := range dbMsgs {

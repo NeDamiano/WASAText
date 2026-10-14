@@ -75,6 +75,11 @@ type AppDatabase interface {
 	DeleteComment(commentId int64) error
 	GetComments(convId int64) ([]Comment, error)
 
+	// groups
+	CreateGroup(name string, members []int64) (int64, error)
+	AddMember(groupId int64, userId int64) error
+	LeaveGroup(groupId int64, userId int64) error
+
 	Ping() error
 }
 

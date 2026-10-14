@@ -60,6 +60,13 @@ type Conversation struct {
 	Messages []Message `json:"messages,omitempty"`
 }
 
+func (c *Conversation) FromDatabase(dbConv database.ConversationSummary) {
+	c.Id = dbConv.Id
+	c.IsGroup = dbConv.IsGroup
+	c.Name = dbConv.Name
+	c.Photo = dbConv.Photo
+}
+
 type Message struct {
 	Id        int64     `json:"id"`
 	Timestamp time.Time `json:"timestamp"`
