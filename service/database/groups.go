@@ -36,3 +36,15 @@ func (db *appdbimpl) LeaveGroup(groupId int64, userId int64) error {
 		AND message_id IN (SELECT id FROM messages WHERE conversation_id = ?)`, userId, groupId)
 	return err
 }
+
+// SetGroupName changes the name of a group
+func (db *appdbimpl) SetGroupName(groupId int64, name string) error {
+	_, err := db.c.Exec("UPDATE conversations SET name = ? WHERE id = ?", name, groupId)
+	return err
+}
+
+// SetGroupPhoto changes the photo URL of a group
+func (db *appdbimpl) SetGroupPhoto(groupId int64, photo string) error {
+	_, err := db.c.Exec("UPDATE conversations SET photo = ? WHERE id = ?", photo, groupId)
+	return err
+}

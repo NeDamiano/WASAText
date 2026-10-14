@@ -157,3 +157,120 @@ func (rt *_router) leaveGroup(w http.ResponseWriter, r *http.Request, ps httprou
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+type setGroupNameRequest struct {
+	Name string `json:"name"`
+}
+
+// setGroupName renames a group of the logged-in user
+func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	id, ok := rt.authenticate(w, r, ctx)
+	if !ok {
+		return
+	}
+
+	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
+	if err != nil {
+		sendError(w, http.StatusNotFound, "group not found")
+		return
+	}
+
+	var req setGroupNameRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil || req.Name == "" {
+		sendError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	// only members can rename, and only a group
+	conv, err := rt.db.GetConversation(groupId, id)
+	if errors.Is(err, database.ErrConversationNotFound) {
+		sendError(w, http.StatusNotFound, "group not found")
+		return
+	}
+	if err != nil {
+		ctx.Logger.WithError(err).Error("setGroupName: cannot read the group")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+	if !conv.IsGroup {
+		sendError(w, http.StatusForbidden, "not a group")
+		return
+	}
+
+	err = rt.db.SetGroupName(groupId, req.Name)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("setGroupName: cannot rename the group")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	// conv was read before the update, so set the new name
+	conv.Name = req.Name
+	resp := Conversation{}
+	resp.FromDatabase(conv)
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+// setGroupPhoto changes the photo of a group of the logged-in user
+func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	id, ok := rt.authenticate(w, r, ctx)
+	if !ok {
+		return
+	}
+
+	groupId, err := strconv.ParseInt(ps.ByName("groupId"), 10, 64)
+	if err != nil {
+		sendError(w, http.StatusNotFound, "group not found")
+		return
+	}
+
+	// only members can change it, and only for a group
+	conv, err := rt.db.GetConversation(groupId, id)
+	if errors.Is(err, database.ErrConversationNotFound) {
+		sendError(w, http.StatusNotFound, "group not found")
+		return
+	}
+	if err != nil {
+		ctx.Logger.WithError(err).Error("setGroupPhoto: cannot read the group")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+	if !conv.IsGroup {
+		sendError(w, http.StatusForbidden, "not a group")
+		return
+	}
+
+	data, err := readImage(r)
+	if err != nil {
+		sendError(w, http.StatusBadRequest, "invalid image")
+		return
+	}
+
+	photoId, err := rt.db.CreatePhoto(data)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("setGroupPhoto: cannot save the photo")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	photoUrl := "/photos/" + strconv.FormatInt(photoId, 10)
+	err = rt.db.SetGroupPhoto(groupId, photoUrl)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("setGroupPhoto: cannot update the photo")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	// conv was read before the update, so set the new photo
+	conv.Photo = photoUrl
+	resp := Conversation{}
+	resp.FromDatabase(conv)
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(resp)
+}
