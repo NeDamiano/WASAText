@@ -6,7 +6,7 @@ const instance = axios.create({
 });
 
 // after a page refresh, put the saved token back in the Authorization header
-let token = localStorage.getItem("token");
+let token = sessionStorage.getItem("token");
 if (token) {
 	instance.defaults.headers.common["Authorization"] = "Bearer " + token;
 }
