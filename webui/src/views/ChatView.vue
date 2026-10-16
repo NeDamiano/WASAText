@@ -94,6 +94,7 @@ export default {
 			<h1 class="h2 mb-3">
 				<img v-if="conv.photo" :src="photoUrl(conv.photo)" width="40" height="40" class="rounded-circle me-2">
 				{{ conv.name }}
+				<button v-if="conv.isGroup" class="btn btn-outline-secondary btn-sm ms-2" @click="$router.push('/groups/' + conv.id)">Group settings</button>
 			</h1>
 			<div v-if="replyTo" class="alert alert-secondary py-1 mb-0 small text-truncate">
 				<button class="btn-close float-end" @click="replyTo = null"></button>
