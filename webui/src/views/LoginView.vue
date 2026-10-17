@@ -24,11 +24,14 @@ export default {
 </script>
 
 <template>
-	<div class="mt-5" style="max-width: 400px">
-		<h1 class="h2 mb-3">Login</h1>
-		<ErrorMsg v-if="errormsg" :msg="errormsg"></ErrorMsg>
-		<input v-model="name" class="form-control mb-2" placeholder="Username" @keyup.enter="login">
-		<button class="btn btn-primary" @click="login">Login</button>
+	<div class="card shadow-sm mx-auto mt-5" style="max-width: 400px">
+		<div class="card-body p-4">
+			<h1 class="h3 text-center">WASAText</h1>
+			<p class="text-muted text-center mb-4">Enter your username to log in</p>
+			<ErrorMsg v-if="errormsg" :msg="errormsg"></ErrorMsg>
+			<input v-model="name" class="form-control mb-3" placeholder="Username" @keyup.enter="login">
+			<button class="btn btn-primary w-100" @click="login">Login</button>
+		</div>
 	</div>
 </template>
 
