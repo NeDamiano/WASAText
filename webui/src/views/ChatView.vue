@@ -1,6 +1,6 @@
 <script>
 export default {
-	data() { return { conv: null, text: "", image: null, replyTo: null, reacting: null, forwarding: null, chats: [], emojis: ["👍", "❤️", "😂", "🙂", "😮", "😢"], errormsg: null, timer: null, me: Number(sessionStorage.getItem("token")) } },
+	data() { return { conv: null, text: "", image: null, replyTo: null, reacting: null, forwarding: null, chats: [], users: [], emojis: ["👍", "❤️", "😂", "🙂", "😮", "😢"], errormsg: null, timer: null, me: Number(sessionStorage.getItem("token")) } },
 	methods: {
 		async refresh() {
 			try {
@@ -58,7 +58,9 @@ export default {
 			this.errormsg = null;
 			try {
 				let response = await this.$axios.get("/conversations");
-				this.chats = response.data.conversations;
+				this.chats = response.data.conversations.filter(x => x.isGroup);
+				response = await this.$axios.get("/users");
+				this.users = response.data.users.filter(x => x.id != this.me);
 				this.forwarding = m;
 			} catch (e) {
 				this.errormsg = e.response ? e.response.data.message : e.toString();
@@ -69,6 +71,15 @@ export default {
 			try {
 				await this.$axios.post("/conversations/" + this.$route.params.id + "/messages/" + this.forwarding.id + "/forwards", { destinationId: destinationId });
 				this.forwarding = null;
+			} catch (e) {
+				this.errormsg = e.response ? e.response.data.message : e.toString();
+			}
+		},
+		async forwardToUser(userId) {
+			this.errormsg = null;
+			try {
+				let response = await this.$axios.post("/conversations", { userId: userId });
+				this.forward(response.data.id);
 			} catch (e) {
 				this.errormsg = e.response ? e.response.data.message : e.toString();
 			}
@@ -101,6 +112,7 @@ export default {
 					</div>
 					<ul class="list-group list-group-flush">
 						<li v-for="c in chats" :key="c.id" class="list-group-item list-group-item-action" @click="forward(c.id)">{{ c.name }}</li>
+						<li v-for="u in users" :key="u.id" class="list-group-item list-group-item-action" @click="forwardToUser(u.id)">{{ u.name }}</li>
 					</ul>
 				</div>
 			</div>

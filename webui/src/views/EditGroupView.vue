@@ -13,9 +13,9 @@ export default {
 		async setGroupName() {
 			this.errormsg = null;
 			try {
-				await this.$axios.put("/groups/" + this.$route.params.id + "/name", { name: this.groupName });
+				let response = await this.$axios.put("/groups/" + this.$route.params.id + "/name", { name: this.groupName });
+				this.conv = response.data;
 				this.groupName = "";
-				this.refresh();
 			} catch (e) {
 				this.errormsg = e.response ? e.response.data.message : e.toString();
 			}
@@ -25,8 +25,8 @@ export default {
 			let form = new FormData();
 			form.append("image", event.target.files[0]);
 			try {
-				await this.$axios.put("/groups/" + this.$route.params.id + "/photo", form);
-				this.refresh();
+				let response = await this.$axios.put("/groups/" + this.$route.params.id + "/photo", form);
+				this.conv = response.data;
 			} catch (e) {
 				this.errormsg = e.response ? e.response.data.message : e.toString();
 			}
@@ -44,8 +44,7 @@ export default {
 			this.errormsg = null;
 			try {
 				await this.$axios.post("/groups/" + this.$route.params.id + "/members", { userId: userId });
-				this.users = [];
-				this.search = "";
+				this.users = this.users.filter(x => x.id != userId);
 			} catch (e) {
 				this.errormsg = e.response ? e.response.data.message : e.toString();
 			}
@@ -69,25 +68,29 @@ export default {
 	<div class="mt-3" style="max-width: 400px">
 		<ErrorMsg v-if="errormsg" :msg="errormsg"></ErrorMsg>
 		<div v-if="conv">
-			<h1 class="h2 mb-3">
-				<img v-if="conv.photo" :src="photoUrl(conv.photo)" width="40" height="40" class="rounded-circle me-2">
+			<h1 class="h2 mb-4">
+				<img v-if="conv.photo" :src="photoUrl(conv.photo)" width="80" height="80" class="rounded-circle me-2">
 				{{ conv.name }}
 			</h1>
-			<div class="input-group mb-2">
+			<h2 class="h6">Name</h2>
+			<div class="input-group mb-4">
 				<input v-model="groupName" class="form-control" placeholder="New group name" @keyup.enter="setGroupName">
 				<button class="btn btn-outline-primary" @click="setGroupName">Rename</button>
 			</div>
-			<label class="btn btn-outline-secondary mb-3">
+			<h2 class="h6">Photo</h2>
+			<label class="btn btn-outline-secondary mb-4">
 				Change group photo
 				<input type="file" accept="image/*" hidden @change="setGroupPhoto">
 			</label>
+			<h2 class="h6">Add member</h2>
 			<div class="input-group mb-2">
-				<input v-model="search" class="form-control" placeholder="Search users to add" @keyup.enter="searchUsers">
+				<input v-model="search" class="form-control" placeholder="Search users" @keyup.enter="searchUsers">
 				<button class="btn btn-outline-primary" @click="searchUsers">Search</button>
 			</div>
-			<ul class="list-group mb-3">
+			<ul class="list-group mb-4">
 				<li v-for="u in users" :key="u.id" class="list-group-item list-group-item-action" @click="addMember(u.id)">Add {{ u.name }}</li>
 			</ul>
+			<hr>
 			<button class="btn btn-outline-primary me-2" @click="$router.push('/conversations/' + conv.id)">Back to chat</button>
 			<button class="btn btn-danger" @click="leaveGroup">Leave group</button>
 		</div>

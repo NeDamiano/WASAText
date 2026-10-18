@@ -3,7 +3,6 @@ export default {
 	data() { return { conversations: [], errormsg: null, timer: null, search: "", users: [] } },
 	methods: {
 		async refresh() {
-			this.errormsg = null;
 			try {
 				let response = await this.$axios.get("/conversations");
 				this.conversations = response.data.conversations;
@@ -29,7 +28,7 @@ export default {
 				this.errormsg = e.response ? e.response.data.message : e.toString();
 			}
 		},
-		photoUrl(photo) { return __API_URL__ + photo; },
+		photoUrl(photo) { return __API_URL__ + "/photos/" + photo.split("/")[2]; },
 		openChat(id) { this.$router.push("/conversations/" + id); },
 	},
 	mounted() {
@@ -46,7 +45,10 @@ export default {
 		<ErrorMsg v-if="errormsg" :msg="errormsg"></ErrorMsg>
 		<div class="input-group mb-2" style="max-width: 400px">
 			<input v-model="search" class="form-control" placeholder="Search users" @keyup.enter="searchUsers">
-			<button class="btn btn-outline-primary" @click="searchUsers">Search</button>
+			<button class="btn btn-outline-primary" title="Search" @click="searchUsers">
+				<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#search"/></svg>
+			</button>
+			<button class="btn btn-outline-secondary" @click="search = ''; searchUsers()">Show all</button>
 		</div>
 		<ul class="list-group mb-4" style="max-width: 400px">
 			<li v-for="u in users" :key="u.id" class="list-group-item list-group-item-action" @click="startChat(u.id)">{{ u.name }}</li>
