@@ -100,7 +100,7 @@ export default {
 
 <template>
 	<div class="mt-3">
-		<div class="position-fixed bottom-0 end-0 m-3" style="z-index: 1060">
+		<div class="position-fixed top-0 end-0 m-3" style="z-index: 1060">
 			<ErrorMsg v-if="errormsg" :msg="errormsg"></ErrorMsg>
 		</div>
 		<div v-if="forwarding" class="modal d-block" style="background: rgba(0, 0, 0, 0.5)">
@@ -117,19 +117,60 @@ export default {
 				</div>
 			</div>
 		</div>
-		<div v-if="conv">
+		<div v-if="conv" class="d-flex flex-column" style="height: calc(100vh - 80px)">
 			<h1 class="h2 mb-3">
 				<img v-if="conv.photo" :src="photoUrl(conv.photo)" width="40" height="40" class="rounded-circle me-2">
 				{{ conv.name }}
-				<button v-if="conv.isGroup" class="btn btn-outline-secondary btn-sm ms-2" @click="$router.push('/groups/' + conv.id)">Group settings</button>
+				<button v-if="conv.isGroup" class="btn btn-outline-secondary ms-2" @click="$router.push('/groups/' + conv.id)">Group settings</button>
 			</h1>
+			<div class="flex-grow-1 overflow-auto d-flex flex-column-reverse mb-2 pe-3">
+				<div v-for="m in conv.messages" :key="m.id" class="card mb-2" :class="m.sender.id == me ? 'ms-auto bg-success bg-opacity-25' : ''" style="max-width: 70%; width: fit-content">
+					<div class="card-body p-2">
+						<div v-if="m.sender.id != me" class="fw-bold">{{ m.sender.name }}</div>
+						<div v-if="m.forwarded" class="small text-muted fst-italic">Forwarded</div>
+						<div v-if="m.replyTo && original(m.replyTo)" class="border-start border-3 ps-2 mb-1 small text-muted text-truncate">
+							<svg v-if="original(m.replyTo).photo" class="feather"><use href="/feather-sprite-v4.29.0.svg#image"/></svg>
+							{{ original(m.replyTo).text }}
+						</div>
+						<img v-if="m.photo" :src="photoUrl(m.photo)" class="img-fluid mb-1" style="max-height: 400px">
+						<div v-if="m.text">{{ m.text }}</div>
+						<div v-if="m.comments">
+							<span v-for="c in m.comments" :key="c.id" class="badge text-bg-light border fw-normal fs-6 me-1">
+								{{ c.emoji }} {{ c.sender.name }}
+								<button v-if="c.sender.id == me" class="btn-close ms-1" style="font-size: 0.5rem" @click="unreact(m, c)"></button>
+							</span>
+						</div>
+						<div class="text-muted text-end">
+							<div class="btn-group btn-group-sm me-2">
+								<button class="btn btn-outline-dark" title="React" @click="reacting = reacting == m.id ? null : m.id">
+									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#smile"/></svg>
+								</button>
+								<button class="btn btn-outline-dark" title="Reply" @click="replyTo = m">
+									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#corner-up-left"/></svg>
+								</button>
+								<button class="btn btn-outline-dark" title="Forward" @click="startForward(m)">
+									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#corner-up-right"/></svg>
+								</button>
+								<button v-if="m.sender.id == me" class="btn btn-outline-danger" title="Delete" @click="deleteMessage(m)">
+									<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#trash-2"/></svg>
+								</button>
+							</div>
+							{{ new Date(m.timestamp).toLocaleString() }}
+							<span v-if="m.sender.id == me">{{ ticks(m.status) }}</span>
+						</div>
+						<div v-if="reacting == m.id" class="text-end">
+							<button v-for="e in emojis" :key="e" class="btn btn-sm" @click="react(m, e)">{{ e }}</button>
+						</div>
+					</div>
+				</div>
+			</div>
 			<div v-if="replyTo" class="alert alert-secondary py-1 mb-0 small text-truncate">
 				<button class="btn-close float-end" @click="replyTo = null"></button>
 				Reply to {{ replyTo.sender.name }}:
 				<svg v-if="replyTo.photo" class="feather"><use href="/feather-sprite-v4.29.0.svg#image"/></svg>
 				{{ replyTo.text }}
 			</div>
-			<div class="input-group mb-3">
+			<div class="input-group">
 				<input v-model="text" class="form-control" placeholder="Message" @keyup.enter="send">
 				<label class="btn btn-outline-secondary">
 					<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#paperclip"/></svg>
@@ -140,45 +181,6 @@ export default {
 					<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#x"/></svg>
 				</button>
 				<button class="btn btn-primary" @click="send">Send</button>
-			</div>
-			<div v-for="m in conv.messages" :key="m.id" class="card mb-2" :class="m.sender.id == me ? 'ms-auto bg-light' : ''" style="max-width: 70%; width: fit-content">
-				<div class="card-body p-2">
-					<div v-if="m.sender.id != me" class="fw-bold">{{ m.sender.name }}</div>
-					<div v-if="m.forwarded" class="small text-muted fst-italic">Forwarded</div>
-					<div v-if="m.replyTo && original(m.replyTo)" class="border-start border-3 ps-2 mb-1 small text-muted text-truncate">
-						<svg v-if="original(m.replyTo).photo" class="feather"><use href="/feather-sprite-v4.29.0.svg#image"/></svg>
-						{{ original(m.replyTo).text }}
-					</div>
-					<img v-if="m.photo" :src="photoUrl(m.photo)" class="img-fluid mb-1" style="max-height: 400px">
-					<div v-if="m.text">{{ m.text }}</div>
-					<div v-if="m.comments">
-						<span v-for="c in m.comments" :key="c.id" class="badge text-bg-light border fw-normal fs-6 me-1">
-							{{ c.emoji }} {{ c.sender.name }}
-							<button v-if="c.sender.id == me" class="btn-close ms-1" style="font-size: 0.5rem" @click="unreact(m, c)"></button>
-						</span>
-					</div>
-					<div class="text-muted text-end">
-						<div class="btn-group btn-group-sm me-2">
-							<button class="btn btn-outline-secondary" title="React" @click="reacting = reacting == m.id ? null : m.id">
-								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#smile"/></svg>
-							</button>
-							<button class="btn btn-outline-secondary" title="Reply" @click="replyTo = m">
-								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#corner-up-left"/></svg>
-							</button>
-							<button class="btn btn-outline-secondary" title="Forward" @click="startForward(m)">
-								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#corner-up-right"/></svg>
-							</button>
-							<button v-if="m.sender.id == me" class="btn btn-outline-danger" title="Delete" @click="deleteMessage(m)">
-								<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#trash-2"/></svg>
-							</button>
-						</div>
-						{{ new Date(m.timestamp).toLocaleString() }}
-						<span v-if="m.sender.id == me">{{ ticks(m.status) }}</span>
-					</div>
-					<div v-if="reacting == m.id" class="text-end">
-						<button v-for="e in emojis" :key="e" class="btn btn-sm" @click="react(m, e)">{{ e }}</button>
-					</div>
-				</div>
 			</div>
 		</div>
 	</div>

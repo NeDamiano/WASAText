@@ -85,7 +85,10 @@ export default {
 			<h2 class="h6">Add member</h2>
 			<div class="input-group mb-2">
 				<input v-model="search" class="form-control" placeholder="Search users" @keyup.enter="searchUsers">
-				<button class="btn btn-outline-primary" @click="searchUsers">Search</button>
+				<button class="btn btn-outline-primary" title="Search" @click="searchUsers">
+					<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#search"/></svg>
+				</button>
+				<button class="btn btn-outline-secondary" @click="search = ''; searchUsers()">Show all</button>
 			</div>
 			<ul class="list-group mb-4">
 				<li v-for="u in users" :key="u.id" class="list-group-item list-group-item-action" @click="addMember(u.id)">Add {{ u.name }}</li>

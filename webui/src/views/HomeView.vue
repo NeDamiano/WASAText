@@ -58,7 +58,7 @@ export default {
 			<li v-for="c in conversations" :key="c.id" class="list-group-item list-group-item-action" @click="openChat(c.id)">
 				<img v-if="c.photo" :src="photoUrl(c.photo)" width="40" height="40" class="rounded-circle me-2">
 				<b>{{ c.name }}</b>
-				<span v-if="c.isGroup" class="badge bg-secondary ms-2">group</span>
+				<span v-if="c.isGroup" class="badge bg-secondary ms-2">Group</span>
 				<div v-if="c.lastMessage" class="text-muted small">
 					{{ new Date(c.lastMessage.timestamp).toLocaleString() }} -
 					<svg v-if="c.lastMessage.isPhoto" class="feather"><use href="/feather-sprite-v4.29.0.svg#image"/></svg>

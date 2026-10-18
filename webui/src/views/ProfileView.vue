@@ -40,14 +40,16 @@ export default {
 <template>
 	<div class="mt-3" style="max-width: 400px">
 		<ErrorMsg v-if="errormsg" :msg="errormsg"></ErrorMsg>
-		<h1 v-if="user" class="h2 mb-3">
+		<h1 v-if="user" class="h2 mb-4">
 			<img v-if="user.photo" :src="photoUrl(user.photo)" width="80" height="80" class="rounded-circle me-2">
 			{{ user.name }}
 		</h1>
-		<div class="input-group mb-2">
+		<h2 class="h6">Name</h2>
+		<div class="input-group mb-4">
 			<input v-model="name" class="form-control" placeholder="New username" @keyup.enter="setMyUserName">
 			<button class="btn btn-outline-primary" @click="setMyUserName">Change name</button>
 		</div>
+		<h2 class="h6">Photo</h2>
 		<label class="btn btn-outline-secondary">
 			Change profile photo
 			<input type="file" accept="image/*" hidden @change="setMyPhoto">
