@@ -120,6 +120,7 @@ export default {
 		<div v-if="conv" class="d-flex flex-column" style="height: calc(100vh - 80px)">
 			<h1 class="h2 mb-3">
 				<img v-if="conv.photo" :src="photoUrl(conv.photo)" width="40" height="40" class="rounded-circle me-2">
+				<span v-else class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white me-2" style="width: 40px; height: 40px">{{ conv.name[0] }}</span>
 				{{ conv.name }}
 				<button v-if="conv.isGroup" class="btn btn-outline-secondary ms-2" @click="$router.push('/groups/' + conv.id)">Group settings</button>
 			</h1>

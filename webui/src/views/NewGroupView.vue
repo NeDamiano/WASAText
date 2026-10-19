@@ -41,6 +41,9 @@ export default {
 		<h2 class="h6">Add members</h2>
 		<div class="input-group mb-2">
 			<input v-model="search" class="form-control" placeholder="Search users" @keyup.enter="searchUsers">
+			<button v-if="users.length" class="btn btn-outline-secondary" title="Clear" @click="search = ''; users = []">
+				<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#x"/></svg>
+			</button>
 			<button class="btn btn-outline-primary" title="Search" @click="searchUsers">
 				<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#search"/></svg>
 			</button>

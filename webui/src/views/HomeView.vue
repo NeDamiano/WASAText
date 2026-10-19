@@ -45,6 +45,9 @@ export default {
 		<ErrorMsg v-if="errormsg" :msg="errormsg"></ErrorMsg>
 		<div class="input-group mb-2" style="max-width: 400px">
 			<input v-model="search" class="form-control" placeholder="Search users" @keyup.enter="searchUsers">
+			<button v-if="users.length" class="btn btn-outline-secondary" title="Clear" @click="search = ''; users = []">
+				<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#x"/></svg>
+			</button>
 			<button class="btn btn-outline-primary" title="Search" @click="searchUsers">
 				<svg class="feather"><use href="/feather-sprite-v4.29.0.svg#search"/></svg>
 			</button>
@@ -57,6 +60,7 @@ export default {
 		<ul class="list-group">
 			<li v-for="c in conversations" :key="c.id" class="list-group-item list-group-item-action" @click="openChat(c.id)">
 				<img v-if="c.photo" :src="photoUrl(c.photo)" width="40" height="40" class="rounded-circle me-2">
+				<span v-else class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white me-2" style="width: 40px; height: 40px">{{ c.name[0] }}</span>
 				<b>{{ c.name }}</b>
 				<span v-if="c.isGroup" class="badge bg-secondary ms-2">Group</span>
 				<div v-if="c.lastMessage" class="text-muted small">

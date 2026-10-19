@@ -158,9 +158,23 @@ func (rt *_router) getConversation(w http.ResponseWriter, r *http.Request, ps ht
 		return
 	}
 
+	dbMembers, err := rt.db.GetMembers(convId)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("getConversation: cannot read the members")
+		sendError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
 	// copy id, isGroup, name and photo from the database struct to response struct
 	resp := Conversation{}
 	resp.FromDatabase(dbConv)
+
+	// convert each member
+	for _, dbMember := range dbMembers {
+		member := User{}
+		member.FromDatabase(dbMember)
+		resp.Members = append(resp.Members, member)
+	}
 
 	// convert each message and attach its reactions
 	for _, dbMsg := range dbMsgs {

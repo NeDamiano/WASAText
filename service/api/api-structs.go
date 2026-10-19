@@ -58,6 +58,7 @@ type Conversation struct {
 	Name     string    `json:"name"`
 	Photo    string    `json:"photo,omitempty"`
 	Messages []Message `json:"messages,omitempty"`
+	Members  []User    `json:"members,omitempty"`
 }
 
 func (c *Conversation) FromDatabase(dbConv database.ConversationSummary) {

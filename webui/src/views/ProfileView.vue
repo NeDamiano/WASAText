@@ -42,6 +42,7 @@ export default {
 		<ErrorMsg v-if="errormsg" :msg="errormsg"></ErrorMsg>
 		<h1 v-if="user" class="h2 mb-4">
 			<img v-if="user.photo" :src="photoUrl(user.photo)" width="80" height="80" class="rounded-circle me-2">
+			<span v-else class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white me-2" style="width: 80px; height: 80px">{{ user.name[0] }}</span>
 			{{ user.name }}
 		</h1>
 		<h2 class="h6">Name</h2>

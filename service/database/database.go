@@ -81,6 +81,7 @@ type AppDatabase interface {
 	LeaveGroup(groupId int64, userId int64) error
 	SetGroupName(groupId int64, name string) error
 	SetGroupPhoto(groupId int64, photo string) error
+	GetMembers(convId int64) ([]User, error)
 
 	Ping() error
 }

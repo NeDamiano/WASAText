@@ -100,3 +100,32 @@ func (db *appdbimpl) GetConversation(convId int64, userId int64) (ConversationSu
 	}
 	return conv, nil
 }
+
+// GetMembers returns the members of a conversation
+func (db *appdbimpl) GetMembers(convId int64) ([]User, error) {
+	rows, err := db.c.Query(`
+		SELECT u.id, u.name, COALESCE(u.photo, '')
+		FROM members m
+		JOIN users u ON u.id = m.user_id
+		WHERE m.conversation_id = ?
+		ORDER BY u.name`, convId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []User{}
+	for rows.Next() {
+		var u User
+		err = rows.Scan(&u.Id, &u.Name, &u.Photo)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}

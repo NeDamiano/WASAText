@@ -686,6 +686,12 @@ components:
           minItems: 0
           maxItems: 10000
           items: { $ref: "#/components/schemas/Message" }
+        members:
+          description: Members of the conversation
+          type: array
+          minItems: 0
+          maxItems: 10000
+          items: { $ref: "#/components/schemas/User" }
       required: [id, isGroup, name]
       example:
         id: 7
