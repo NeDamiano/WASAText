@@ -3,6 +3,16 @@ import { RouterLink, RouterView } from 'vue-router'
 </script>
 <script>
 export default {
+	data() {
+		return {
+			menuOpen: false,
+		}
+	},
+	watch: {
+		$route() {
+			this.menuOpen = false;
+		},
+	},
 	methods: {
 		logout() {
 			sessionStorage.removeItem("token");
@@ -16,14 +26,14 @@ export default {
 
 	<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
 		<a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="#/">WASAText</a>
-		<button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+		<button class="navbar-toggler position-absolute d-md-none" type="button" aria-label="Toggle navigation" @click="menuOpen = !menuOpen">
 			<span class="navbar-toggler-icon"></span>
 		</button>
 	</header>
 
 	<div class="container-fluid">
 		<div class="row">
-			<nav v-if="$route.path != '/login'" id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+			<nav v-if="$route.path != '/login'" id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse" :class="{ show: menuOpen }">
 				<div class="position-sticky pt-3 sidebar-sticky">
 					<ul class="nav flex-column">
 						<li class="nav-item">
@@ -62,4 +72,10 @@ export default {
 </template>
 
 <style>
+@media (max-width: 767.98px) {
+	#sidebarMenu {
+		position: static;
+		padding-top: 0;
+	}
+}
 </style>

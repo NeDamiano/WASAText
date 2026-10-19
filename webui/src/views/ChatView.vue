@@ -117,7 +117,7 @@ export default {
 				</div>
 			</div>
 		</div>
-		<div v-if="conv" class="d-flex flex-column" style="height: calc(100vh - 80px)">
+		<div v-if="conv" class="d-flex flex-column" style="height: calc(100dvh - 80px)">
 			<h1 class="h2 mb-3">
 				<img v-if="conv.photo" :src="photoUrl(conv.photo)" width="40" height="40" class="rounded-circle me-2">
 				<span v-else class="d-inline-flex align-items-center justify-content-center rounded-circle bg-secondary text-white me-2" style="width: 40px; height: 40px">{{ conv.name[0] }}</span>
@@ -136,7 +136,7 @@ export default {
 						<img v-if="m.photo" :src="photoUrl(m.photo)" class="img-fluid mb-1" style="max-height: 400px">
 						<div v-if="m.text">{{ m.text }}</div>
 						<div v-if="m.comments">
-							<span v-for="c in m.comments" :key="c.id" class="badge text-bg-light border fw-normal fs-6 me-1">
+							<span v-for="c in m.comments" :key="c.id" class="badge text-bg-light border fw-normal fs-6 me-1 d-inline-flex align-items-center">
 								{{ c.emoji }} {{ c.sender.name }}
 								<button v-if="c.sender.id == me" class="btn-close ms-1" style="font-size: 0.5rem" @click="unreact(m, c)"></button>
 							</span>
