@@ -54,7 +54,7 @@ func (db *appdbimpl) GetComments(convId int64) ([]Comment, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	comments := []Comment{}
 	for rows.Next() {

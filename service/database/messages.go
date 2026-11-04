@@ -82,7 +82,7 @@ func (db *appdbimpl) GetMessages(convId int64) ([]Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	messages := []Message{}
 	for rows.Next() {

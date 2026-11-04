@@ -66,7 +66,7 @@ func (db *appdbimpl) SearchUsers(text string) ([]User, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	users := []User{}
 	for rows.Next() {

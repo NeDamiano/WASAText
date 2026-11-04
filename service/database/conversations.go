@@ -59,7 +59,7 @@ func (db *appdbimpl) GetMyConversations(userId int64) ([]ConversationSummary, er
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	convs := []ConversationSummary{}
 	for rows.Next() {
@@ -112,7 +112,7 @@ func (db *appdbimpl) GetMembers(convId int64) ([]User, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	users := []User{}
 	for rows.Next() {
