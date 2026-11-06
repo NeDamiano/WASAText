@@ -1,4 +1,5 @@
 # WASAText
+[![CI/CD](https://github.com/NeDamiano/WASAText/actions/workflows/ci.yml/badge.svg)](https://github.com/NeDamiano/WASAText/actions/workflows/ci.yml)
 
 A full-stack messaging web application: one-to-one and group chats, photo messages, replies, forwarding, emoji reactions and read receipts.
 
